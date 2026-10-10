@@ -48,6 +48,14 @@ clavicularius generate --key-id root
 
 The program prints `id`, `alg`, and `export_private`, then asks you to type `generate`. A pipe, or any stdin that is not a terminal, is refused. An existing key file is not overwritten.
 
+The listener accepts the same creation without the terminal prompt:
+
+```json
+{"op":"generate","key_id":"root"}
+```
+
+The response names the id and does not include private bytes. An existing key file is `already_present`.
+
 ## Listen
 
 On the machine that holds the keys:
@@ -92,12 +100,13 @@ Command errors on stderr include `already_present`, `no_caller`, `listen_invalid
 
 ## One shot
 
-With no arguments, the process reads one JSON object from stdin and writes one JSON object to stdout. `serve` handles the same object. `generate` on this path is refused.
+With no arguments, the process reads one JSON object from stdin and writes one JSON object to stdout. `serve` handles the same object. `generate` creates one catalog key and does not return private bytes.
 
 Requests:
 
 ```json
 {"op":"list"}
+{"op":"generate","key_id":"root"}
 {"op":"sign","key_id":"root","message_b64":"<raw message, base64url>"}
 {"op":"export_public","key_id":"root"}
 {"op":"export_private","key_id":"export-a"}
@@ -116,7 +125,7 @@ A line with no key file yet can be added. Its `alg`, `kid`, `bytes`, and `encodi
 
 `sign` signs the decoded message bytes. For `ES256` it hashes those bytes with SHA-256, the same way WebCrypto `subtle.sign` does. It does not parse the message.
 
-A response has `ok` and `error`. `error` is an empty string on success. Codes include `bad_request`, `unknown_field`, `body_too_large`, `unknown_op`, `key_id_required`, `key_unknown`, `key_absent`, `export_forbidden`, `no_public_key`, `not_a_signing_key`, `generate_local_only`, `catalog_missing`, `catalog_invalid`, `catalog_perms`, `catalog_symlink`, `catalog_rejected`, `key_perms`, `key_symlink`, `key_invalid`.
+A response has `ok` and `error`. `error` is an empty string on success. Codes include `bad_request`, `unknown_field`, `body_too_large`, `unknown_op`, `key_id_required`, `key_unknown`, `key_absent`, `export_forbidden`, `no_public_key`, `not_a_signing_key`, `already_present`, `catalog_missing`, `catalog_invalid`, `catalog_perms`, `catalog_symlink`, `catalog_rejected`, `key_perms`, `key_symlink`, `key_invalid`.
 
 `list` and `export_public` do not include private components.
 

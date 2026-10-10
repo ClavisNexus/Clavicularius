@@ -18,7 +18,8 @@ func TestProtocolHidesPrivateMaterial(t *testing.T) {
 	  "keys": [
 	    {"id": "root", "alg": "ES256", "export_private": false, "kid": "root"},
 	    {"id": "export-a", "alg": "Ed25519", "export_private": true, "kid": "export-a"},
-	    {"id": "random-a", "alg": "random", "export_private": true, "bytes": 32, "encoding": "base64"}
+	    {"id": "random-a", "alg": "random", "export_private": true, "bytes": 32, "encoding": "base64"},
+	    {"id": "fresh", "alg": "ES256", "export_private": false, "kid": "fresh"}
 	  ]
 	}`)
 	if code := keys.Generate(home, catalog.Entry{ID: "root", Alg: catalog.AlgES256, Kid: "root"}); code != "" {
@@ -69,9 +70,14 @@ func TestProtocolHidesPrivateMaterial(t *testing.T) {
 	if !random.OK || random.Value == "" || random.PrivateJWK != nil {
 		t.Fatalf("random %+v", random)
 	}
-	gen := protocol.Handle(home, []byte(`{"op":"generate","key_id":"root"}`))
-	if gen.OK || gen.Error != protocol.ErrGenerateLocalOnly {
-		t.Fatalf("generate %+v", gen)
+	again := protocol.Handle(home, []byte(`{"op":"generate","key_id":"root"}`))
+	if again.OK || again.Error != keys.ErrAlreadyPresent || strings.Contains(string(protocol.Encode(again)), `"d"`) {
+		t.Fatalf("generate existing %+v", again)
+	}
+	fresh := protocol.Handle(home, []byte(`{"op":"generate","key_id":"fresh"}`))
+	freshJSON := protocol.Encode(fresh)
+	if !fresh.OK || fresh.KeyID != "fresh" || strings.Contains(string(freshJSON), `"d"`) || !keys.Present(home, "fresh") {
+		t.Fatalf("generate fresh %s", freshJSON)
 	}
 }
 
