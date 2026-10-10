@@ -1,0 +1,12 @@
+{
+  "message": "clavicularius-interop",
+  "private_jwk": {
+    "kty": "OKP",
+    "crv": "Ed25519",
+    "x": "pyOopx01bi1Shpxl4wxr-25SXwp6QsEymT24BIYrgb8",
+    "d": "ETI5-wZLvh_2uxPM8Q0iEUNrNyrX-sUonYU9zqoS01U",
+    "kid": "throwaway",
+    "alg": "EdDSA"
+  },
+  "signature": "eTXsxcoqY9JrqOsFii_ITRHf8k0qXdG6MxX5AVcDaYIT8YmOV06NEzzKXIEyDbkEgRNlNV2LsMZyfCBK0Ll4Aw"
+}

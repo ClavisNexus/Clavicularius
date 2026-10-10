@@ -1,0 +1,23 @@
+{
+  "keys": [
+    {
+      "id": "root",
+      "alg": "ES256",
+      "export_private": false,
+      "kid": "root"
+    },
+    {
+      "id": "export-a",
+      "alg": "Ed25519",
+      "export_private": true,
+      "kid": "export-a"
+    },
+    {
+      "id": "random-a",
+      "alg": "random",
+      "export_private": true,
+      "bytes": 32,
+      "encoding": "hex"
+    }
+  ]
+}

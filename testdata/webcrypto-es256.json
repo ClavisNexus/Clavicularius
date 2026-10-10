@@ -1,0 +1,13 @@
+{
+  "message": "clavicularius-interop",
+  "private_jwk": {
+    "kty": "EC",
+    "crv": "P-256",
+    "x": "FgUXHj-PQdWU6lh7JfZ2mvY24jP1qj7VevRasKq7Oas",
+    "d": "8DQAh6pHk0midjjodZCgTO0Ti5apJMN4K51oB9C2rZg",
+    "kid": "throwaway",
+    "alg": "ES256",
+    "y": "rWIpJFIIhN-CNh49BodTCCuwDQBJTfS6vyvAq8dmxCw"
+  },
+  "signature": "qBnDba6BdSP8n0vIwNG3N5pZoj2SnZWi9fCEzCOMEkOi1m6JrKjK9NBrx3Jk80t_H-Blj1e_fig3efZcYlZH9w"
+}
