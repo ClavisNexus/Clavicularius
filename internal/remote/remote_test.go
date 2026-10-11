@@ -178,6 +178,33 @@ func TestServeStopsOnCancel(t *testing.T) {
 	}
 }
 
+func TestServeIgnoresDotfiles(t *testing.T) {
+	home := t.TempDir()
+	if _, code := Init(home); code != "" {
+		t.Fatal(code)
+	}
+	if code := AddCaller(home, "lab", leafPEM(t)); code != "" {
+		t.Fatal(code)
+	}
+	if err := os.WriteFile(filepath.Join(home, "callers", ".DS_Store"), []byte("junk"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	addr := freeAddr(t)
+	ctx, cancel := context.WithCancel(context.Background())
+	errCh := make(chan string, 1)
+	go func() { errCh <- Serve(ctx, home, addr) }()
+	waitTCP(t, addr)
+	cancel()
+	select {
+	case code := <-errCh:
+		if code != "" {
+			t.Fatalf("serve %s", code)
+		}
+	case <-time.After(4 * time.Second):
+		t.Fatal("serve did not stop")
+	}
+}
+
 func TestWideCallerRefused(t *testing.T) {
 	home := t.TempDir()
 	if _, code := Init(home); code != "" {

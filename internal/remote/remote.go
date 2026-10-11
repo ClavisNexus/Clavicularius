@@ -434,7 +434,11 @@ func loadServer(home string) (tls.Certificate, *x509.CertPool, string) {
 	n := 0
 	for _, ent := range entries {
 		name := ent.Name()
-		if ent.IsDir() || !strings.HasSuffix(name, ".crt") || strings.HasPrefix(name, ".") {
+		// Ignore Finder metadata and other dotfiles. They are not callers.
+		if strings.HasPrefix(name, ".") {
+			continue
+		}
+		if ent.IsDir() || !strings.HasSuffix(name, ".crt") {
 			return tls.Certificate{}, nil, ErrCallerInvalid
 		}
 		body, code := readRegular(filepath.Join(dir, name))
