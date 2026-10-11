@@ -123,17 +123,38 @@ func runCallerKey(args []string) int {
 		usage()
 		return 2
 	}
-	pass, err := tty.Read()
+	pass, err := tty.ReadPrompt("passphrase")
 	if err != nil {
 		fmt.Fprintln(os.Stderr, remote.ErrCallerLocked)
 		return 1
 	}
 	defer keyfile.Wipe(pass)
+	again, err := tty.ReadPrompt("repeat passphrase")
+	if err != nil {
+		fmt.Fprintln(os.Stderr, remote.ErrCallerLocked)
+		return 1
+	}
+	defer keyfile.Wipe(again)
+	if !bytesEqual(pass, again) {
+		fmt.Fprintln(os.Stderr, remote.ErrCallerLocked)
+		return 1
+	}
 	if code := remote.CreateCallerKey(flags["out"], flags["cert-out"], pass); code != "" {
 		fmt.Fprintln(os.Stderr, code)
 		return 1
 	}
 	return 0
+}
+
+func bytesEqual(a, b []byte) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	var v byte
+	for i := range a {
+		v |= a[i] ^ b[i]
+	}
+	return v == 0
 }
 
 func runCaller(args []string) int {

@@ -48,14 +48,6 @@ clavicularius generate --key-id root
 
 The program prints `id`, `alg`, and `export_private`, then asks you to type `generate`. A pipe, or any stdin that is not a terminal, is refused. An existing key file is not overwritten.
 
-The listener accepts the same creation without the terminal prompt:
-
-```json
-{"op":"generate","key_id":"root"}
-```
-
-The response names the id and does not include private bytes. An existing key file is `already_present`.
-
 ## Listen
 
 On the machine that holds the keys:
@@ -72,7 +64,7 @@ On the machine that will call:
 clavicularius caller-key --out caller.json --cert-out caller.crt
 ```
 
-The program reads a passphrase from the terminal. An empty passphrase is refused. `caller.json` is the encrypted private key (`0600`). `cert-out` is the public certificate. Copy only the certificate to the key machine.
+The program reads a passphrase from the terminal, then asks for it again. The two lines must match. An empty passphrase is refused. `caller.json` is the encrypted private key (`0600`). `cert-out` is the public certificate. Copy only the certificate to the key machine.
 
 `caller.json` is a JSON object with `v` 1, `kdf` `pbkdf2-sha256`, `iterations` 600000, and `salt`, `nonce`, and `ciphertext` as unpadded base64url. The plaintext is a JSON object with `key_pkcs8_b64` and `cert_pem`. Salt is 16 bytes, the nonce is 12 bytes, and the cipher is AES-256-GCM.
 
@@ -100,13 +92,12 @@ Command errors on stderr include `already_present`, `no_caller`, `listen_invalid
 
 ## One shot
 
-With no arguments, the process reads one JSON object from stdin and writes one JSON object to stdout. `serve` handles the same object. `generate` creates one catalog key and does not return private bytes.
+With no arguments, the process reads one JSON object from stdin and writes one JSON object to stdout. `serve` handles the same object. `generate` on this path is refused.
 
 Requests:
 
 ```json
 {"op":"list"}
-{"op":"generate","key_id":"root"}
 {"op":"sign","key_id":"root","message_b64":"<raw message, base64url>"}
 {"op":"export_public","key_id":"root"}
 {"op":"export_private","key_id":"export-a"}
@@ -125,7 +116,7 @@ A line with no key file yet can be added. Its `alg`, `kid`, `bytes`, and `encodi
 
 `sign` signs the decoded message bytes. For `ES256` it hashes those bytes with SHA-256, the same way WebCrypto `subtle.sign` does. It does not parse the message.
 
-A response has `ok` and `error`. `error` is an empty string on success. Codes include `bad_request`, `unknown_field`, `body_too_large`, `unknown_op`, `key_id_required`, `key_unknown`, `key_absent`, `export_forbidden`, `no_public_key`, `not_a_signing_key`, `already_present`, `catalog_missing`, `catalog_invalid`, `catalog_perms`, `catalog_symlink`, `catalog_rejected`, `key_perms`, `key_symlink`, `key_invalid`.
+A response has `ok` and `error`. `error` is an empty string on success. Codes include `bad_request`, `unknown_field`, `body_too_large`, `unknown_op`, `key_id_required`, `key_unknown`, `key_absent`, `export_forbidden`, `no_public_key`, `not_a_signing_key`, `generate_local_only`, `catalog_missing`, `catalog_invalid`, `catalog_perms`, `catalog_symlink`, `catalog_rejected`, `key_perms`, `key_symlink`, `key_invalid`.
 
 `list` and `export_public` do not include private components.
 

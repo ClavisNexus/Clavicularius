@@ -1,5 +1,5 @@
-// Package protocol is the one-shot JSON command.
-// The terminal generate command confirms on a tty. This path creates a catalog key without that prompt.
+// Package protocol is the one-shot stdin command.
+// generate is refused here. Key creation is a local terminal command.
 package protocol
 
 import (
@@ -16,13 +16,14 @@ import (
 const (
 	maxBody = 512 * 1024
 
-	ErrBadRequest     = "bad_request"
-	ErrUnknownField   = "unknown_field"
-	ErrBodyTooLarge   = "body_too_large"
-	ErrUnknownOp      = "unknown_op"
-	ErrKeyIDRequired  = "key_id_required"
-	ErrKeyUnknown     = "key_unknown"
-	ErrMessageInvalid = "message_invalid"
+	ErrBadRequest        = "bad_request"
+	ErrUnknownField      = "unknown_field"
+	ErrBodyTooLarge      = "body_too_large"
+	ErrUnknownOp         = "unknown_op"
+	ErrKeyIDRequired     = "key_id_required"
+	ErrKeyUnknown        = "key_unknown"
+	ErrMessageInvalid    = "message_invalid"
+	ErrGenerateLocalOnly = "generate_local_only"
 )
 
 // Request is one command. Unknown fields are rejected.
@@ -88,33 +89,12 @@ func Handle(home string, body []byte) Response {
 		}
 		return putCatalog(home, req.Catalog)
 	case "generate":
-		if req.MessageB64 != "" || len(req.Catalog) != 0 {
-			return fail(req.Op, ErrUnknownField)
-		}
-		if req.KeyID == "" {
-			return fail(req.Op, ErrKeyIDRequired)
-		}
-		return generate(home, req.KeyID)
+		return fail(req.Op, ErrGenerateLocalOnly)
 	case "sign", "export_public", "export_private":
 		return keyed(home, req)
 	default:
 		return fail(req.Op, ErrUnknownOp)
 	}
-}
-
-func generate(home, id string) Response {
-	cat, code := catalog.Load(catalog.Path(home))
-	if code != "" {
-		return failKey("generate", id, code)
-	}
-	entry, ok := cat.Find(id)
-	if !ok {
-		return failKey("generate", id, ErrKeyUnknown)
-	}
-	if code := keys.Generate(home, entry); code != "" {
-		return failKey("generate", id, code)
-	}
-	return Response{OK: true, Op: "generate", KeyID: id}
 }
 
 func putCatalog(home string, raw []byte) Response {

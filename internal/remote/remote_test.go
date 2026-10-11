@@ -126,26 +126,8 @@ func TestServeRoundTrip(t *testing.T) {
 	if code != "" {
 		t.Fatal(code)
 	}
-	if !bytes.Contains(resp, []byte(`"error":"key_id_required"`)) {
+	if !bytes.Contains(resp, []byte(`"error":"generate_local_only"`)) {
 		t.Fatalf("generate %s", resp)
-	}
-	if err := os.WriteFile(filepath.Join(home, "catalog.json"), []byte("{\"keys\":[{\"id\":\"root\",\"alg\":\"ES256\",\"export_private\":false,\"kid\":\"root\"}]}\n"), 0o600); err != nil {
-		t.Fatal(err)
-	}
-	resp, code = Call(context.Background(), endpoint, pin, keyPath, pass, []byte(`{"op":"generate","key_id":"root"}`))
-	if code != "" {
-		t.Fatal(code)
-	}
-	if !bytes.Contains(resp, []byte(`"ok":true`)) || bytes.Contains(resp, []byte(`"d"`)) {
-		t.Fatalf("created %s", resp)
-	}
-	info, err := os.Stat(filepath.Join(home, "keys", "root.json"))
-	if err != nil || info.Mode().Perm() != 0o600 {
-		t.Fatalf("key file %v %v", info, err)
-	}
-	resp, code = Call(context.Background(), endpoint, pin, keyPath, pass, []byte(`{"op":"generate","key_id":"root"}`))
-	if code != "" || !bytes.Contains(resp, []byte(`"error":"already_present"`)) {
-		t.Fatalf("second %s %s", code, resp)
 	}
 
 	const canary = "CANARY_7f3a9c2e1b804d66a0c5e9d27f3a9c2e"
@@ -170,9 +152,8 @@ func TestServeRoundTrip(t *testing.T) {
 	if _, code := Call(context.Background(), endpoint, badPin, keyPath, pass, []byte(`{"op":"put_catalog","catalog":{"keys":[{"id":"`+canary+`","alg":"ES256","export_private":false,"kid":"k"}]}}`)); code != ErrPinMismatch {
 		t.Fatalf("pin %s", code)
 	}
-	got, err := os.ReadFile(filepath.Join(home, "catalog.json"))
-	if err != nil || bytes.Contains(got, []byte(canary)) {
-		t.Fatalf("catalog changed on pin mismatch: %s %v", got, err)
+	if _, err := os.Stat(filepath.Join(home, "catalog.json")); !os.IsNotExist(err) {
+		t.Fatal("catalog written on pin mismatch")
 	}
 }
 

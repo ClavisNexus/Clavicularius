@@ -12,26 +12,33 @@ import (
 )
 
 // Read reads one passphrase from /dev/tty with echo off.
-// An empty line, a line over 1024 bytes, or a missing tty returns caller_locked.
 func Read() ([]byte, error) {
+	return ReadPrompt("passphrase")
+}
+
+// ReadPrompt is Read with a custom prompt line written to the tty.
+func ReadPrompt(prompt string) ([]byte, error) {
+	if prompt == "" {
+		prompt = "passphrase"
+	}
 	f, err := os.OpenFile("/dev/tty", os.O_RDWR, 0)
 	if err != nil {
 		return nil, keyfile.ErrLocked
 	}
 	defer f.Close()
-	if _, err := io.WriteString(f, "passphrase\n"); err != nil {
-		return nil, keyfile.ErrLocked
-	}
 	old, err := getTermios(int(f.Fd()))
 	if err != nil {
 		return nil, keyfile.ErrLocked
 	}
 	next := *old
-	next.Lflag &^= syscall.ECHO
+	next.Lflag &^= syscall.ECHO | syscall.ECHOE | syscall.ECHOK | syscall.ECHONL
 	if err := setTermios(int(f.Fd()), &next); err != nil {
 		return nil, keyfile.ErrLocked
 	}
 	defer func() { _ = setTermios(int(f.Fd()), old) }()
+	if _, err := io.WriteString(f, prompt+"\n"); err != nil {
+		return nil, keyfile.ErrLocked
+	}
 
 	buf := make([]byte, 1025)
 	n := 0

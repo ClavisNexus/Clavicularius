@@ -16,7 +16,7 @@ func getTermios(fd int) (*syscall.Termios, error) {
 }
 
 func setTermios(fd int, t *syscall.Termios) error {
-	return ioctl(fd, syscall.TIOCSETA, t)
+	return ioctl(fd, syscall.TIOCSETAW, t)
 }
 
 func ioctl(fd int, req uint, t *syscall.Termios) error {
