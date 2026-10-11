@@ -16,7 +16,8 @@ func getTermios(fd int) (*syscall.Termios, error) {
 }
 
 func setTermios(fd int, t *syscall.Termios) error {
-	return ioctl(fd, syscall.TCSETSW, t)
+	// TCSETSW is not in package syscall on all Go builds; TCSETS is enough here.
+	return ioctl(fd, syscall.TCSETS, t)
 }
 
 func ioctl(fd int, req uint, t *syscall.Termios) error {

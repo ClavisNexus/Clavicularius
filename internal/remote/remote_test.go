@@ -126,7 +126,7 @@ func TestServeRoundTrip(t *testing.T) {
 	if code != "" {
 		t.Fatal(code)
 	}
-	if !bytes.Contains(resp, []byte(`"error":"generate_local_only"`)) {
+	if !bytes.Contains(resp, []byte(`"error":"key_id_required"`)) {
 		t.Fatalf("generate %s", resp)
 	}
 

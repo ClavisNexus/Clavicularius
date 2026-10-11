@@ -70,9 +70,14 @@ func TestProtocolHidesPrivateMaterial(t *testing.T) {
 	if !random.OK || random.Value == "" || random.PrivateJWK != nil {
 		t.Fatalf("random %+v", random)
 	}
-	deniedGen := protocol.Handle(home, []byte(`{"op":"generate","key_id":"fresh"}`))
-	if deniedGen.OK || deniedGen.Error != protocol.ErrGenerateLocalOnly || keys.Present(home, "fresh") {
-		t.Fatalf("generate over protocol %+v", deniedGen)
+	again := protocol.Handle(home, []byte(`{"op":"generate","key_id":"root"}`))
+	if again.OK || again.Error != keys.ErrAlreadyPresent || strings.Contains(string(protocol.Encode(again)), `"d"`) {
+		t.Fatalf("generate existing %+v", again)
+	}
+	fresh := protocol.Handle(home, []byte(`{"op":"generate","key_id":"fresh"}`))
+	freshJSON := protocol.Encode(fresh)
+	if !fresh.OK || fresh.KeyID != "fresh" || strings.Contains(string(freshJSON), `"d"`) || !keys.Present(home, "fresh") {
+		t.Fatalf("generate fresh %s", freshJSON)
 	}
 }
 
