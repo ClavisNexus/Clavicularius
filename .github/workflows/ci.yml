@@ -1,0 +1,48 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    - cron: "23 0 * * *"
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    if: github.event_name != 'schedule'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+          cache: false
+      - run: go mod download && go mod verify
+      - run: go vet ./...
+      - run: GOOS=darwin GOARCH=arm64 go vet ./...
+      - run: go test ./...
+
+  govulncheck:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+          cache: false
+      - run: GOTOOLCHAIN=auto go mod download && GOTOOLCHAIN=auto go mod verify
+        working-directory: tools
+      # Build for the runner; GOOS below must change only what is scanned, not the scanner.
+      - run: GOTOOLCHAIN=auto go build -o "$RUNNER_TEMP/govulncheck" golang.org/x/vuln/cmd/govulncheck
+        working-directory: tools
+      - run: '"$RUNNER_TEMP/govulncheck" ./...'
+      - run: GOOS=darwin GOARCH=arm64 "$RUNNER_TEMP/govulncheck" ./...
