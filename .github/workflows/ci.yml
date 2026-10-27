@@ -23,6 +23,8 @@ jobs:
         with:
           go-version-file: go.mod
           cache: false
+      # node comes with the runner image
+      - run: node .github/public-surface.mjs
       - run: go mod download && go mod verify
       - run: go vet ./...
       - run: GOOS=darwin GOARCH=arm64 go vet ./...
